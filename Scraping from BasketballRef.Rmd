@@ -1,0 +1,24 @@
+---
+title: "Scraping from BasketballRef"
+author: "Jarred Robidoux"
+date: "2/10/2023"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# __Scraping from BasketballRef__
+In order to scrape from BasketballReference.com, we are going to need to utilize
+the "rvest" and "dplyr" packages within R. 
+
+# __Load Packages__
+Let's load the required packages.
+```{r}
+library(rvest)
+library(dplyr)
+```
+
+
+
