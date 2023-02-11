@@ -16,9 +16,95 @@ the "rvest" and "dplyr" packages within R.
 # __Load Packages__
 Let's load the required packages.
 ```{r}
+#install.packages("rvest")
 library(rvest)
+#install.packages("dplyr")
 library(dplyr)
+#install.packages("janitor")
+library(janitor)
+#install.packages("stringr")
+library(stringr)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("prismatic")
+library(prismatic)
+#install.packages("ggrepel")
+library(ggrepel)
 ```
 
+# __Pull the Data__
+```{r}
+# Upload the link of the site where the data will be coming from 
+link <-  "https://www.basketball-reference.com/leagues/NBA_2023.html"
+# Create "page" object and that sends "link" through the read_html() function
+full_table <- read_html(link, as.data.frame=T, stringsAsFactors=T)
+
+# html_nodes to pull all nodes under the "table" label 
+adv <- full_table %>%
+  html_nodes("table")%>%
+  .[[11]] %>%
+  html_table(fill=T)
+```
+
+# __Manipulate Data__
+Let's tidy up our adv dataframe so it is easier to plot
+```{r}
+# make 1 row column names 
+adv <- adv %>% row_to_names(1)
+colnames(adv) <- make.unique(names(adv))
+
+# remove league average row 
+adv <- adv[(!adv$Team == "League Average"),]
+
+# remove all NAs
+adv <- adv[,colSums(is.na(adv))<nrow(adv)]
+
+# remove *s
+adv$Team <- (str_remove(adv$Team, "[*]"))
+```
+
+# __Plot the Data__
+Now it's time to plot our data. We are going to create a scatterplot that compares
+the Offensive Rating and Defensive Rating of Teams this NBA Season. 
+```{r}
+# Create custom theme for the plot 
+theme_jelly <- function(){
+  theme_minimal(base_size = 12, base_family = "Comic Sans MS") %+replace%
+    theme(
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "floralwhite", color = "floralwhite")
+    )
+}
+
+nba <- adv %>%
+  ggplot(aes(x=as.numeric(ORtg), y = as.numeric(DRtg), label = Team))+
+  geom_smooth(method="lm", color = "gray25", fill = "gray20")+
+  geom_point(aes(fill = "red", color = after_scale(clr_darken(fill, 0.3))),
+             shape = 21, 
+             alpha =.75,
+             size = 3)+
+  geom_text_repel(size = 2, color = "black", min.segment.length = unit(0.1, "lines"))+
+  theme_jelly()+
+  theme(
+    legend.position = "none",
+    axis.line = element_line(color = "black"),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(color = "black"),
+    plot.title = element_text(color = "black", hjust = .5, face = "bold", size = 15),
+    plot.subtitle = element_text(color = "gray10", hjust = .5, face = "bold", size = 8))+
+  labs(title = "Offensive Rating of NBA Teams",
+       subtitle = "2022-23 Regular Season || Data:BBallRef\n",
+       x = "Offensive Rating",
+       y = "Defensive Rating",
+       scale_y_reverse()
+  )
+
+ggsave("mid_season.png", nba, height = 6, width = 6, dpi = 300)
+
+
+
+
+
+```
 
 
